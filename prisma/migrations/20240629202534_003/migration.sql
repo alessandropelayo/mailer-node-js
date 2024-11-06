@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "emails" ALTER COLUMN "raw" DROP NOT NULL,
+ALTER COLUMN "from" DROP NOT NULL;

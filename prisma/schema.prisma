@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model migrations {
+  id     Int      @id @default(autoincrement())
+  name   String   @db.VarChar(255)
+  run_on DateTime @db.Timestamp(6)
+}
+
+model emails {
+  dbId         Int      @id @default(autoincrement())
+  id           String   @unique @db.VarChar(255)
+  threadId     String   @db.VarChar(255)
+  labelIds     String[]
+  snippet      String   @db.VarChar(255)
+  historyId    String   @db.VarChar(255)
+  internalDate BigInt
+  sizeEstimate Int
+  raw          Bytes?
+  from         String?
+  subject      String?
+}
+
+model packages {
+  dbId             Int      @id @default(autoincrement())
+  trackingId       String
+  recentStatusTime DateTime
+  carrier          Carrier
+  from             String?
+  statusHistory    status[]
+  deliveryPhoto    photo[]
+
+  @@unique([trackingId, carrier])
+}
+
+model photo {
+  dbId         Int       @id @default(autoincrement())
+  filename     String
+  filesize     Int
+  updatedAt    DateTime  @updatedAt
+  fileLocation String
+  packages     packages? @relation(fields: [packagesDbId], references: [dbId], onDelete: Cascade)
+  packagesDbId Int?
+}
+
+model status {
+  dbId         Int           @id @default(autoincrement())
+  updatedAt    DateTime      @updatedAt
+  trackingId   String
+  statusTime   DateTime
+  deliveryDate DateTime
+  status       PackageStatus
+  packages     packages?     @relation(fields: [packagesDbId], references: [dbId], onDelete: Cascade)
+  packagesDbId Int?
+}
+
+enum Carrier {
+  UPS
+  FedEx
+  USPS
+  USPS_Daily
+}
+
+enum PackageStatus {
+  Pending
+  Shipped
+  OutForDelivery
+  Delivered
+  Returned
+}
