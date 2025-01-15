@@ -4,8 +4,9 @@ import cookieParser from 'cookie-parser';
 const app = express();
 const port = 443;
 const emailRoute = require("./routes/email");
-const packageRoute = require("./routes/packageRoute");
+const packageRoutes = require("./routes/packageRoutes");
 import authRoutes from './routes/authRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 const https = require("https");
 const fsFile = require("fs");
@@ -751,8 +752,9 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/", emailRoute);
-app.use("/", packageRoute);
-app.use("/", authRoutes);
+app.use("/", packageRoutes);
+app.use("/auth", authRoutes);
+app.use('/admin', adminRoutes);
 app.use((err, req, res, next) => {
 	if (res.statusCode === 200) {
 		res.statusCode = 500;

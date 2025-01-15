@@ -1,4 +1,4 @@
-import { Role } from '@prisma/client';
+import { Role, AccessLevel } from '@prisma/client';
 import { Request } from 'express';
 
 export interface UserPayload {
@@ -36,4 +36,4 @@ export interface RefreshTokenRequestBody {
   refreshToken: string;
 }
 
-export { Role };
+export { Role, AccessLevel };

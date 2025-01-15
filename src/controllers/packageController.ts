@@ -1,16 +1,14 @@
+import { Request, Response, NextFunction } from "express";
 const model = require("../models/packageModel");
-const path = require("path");
+import path from "path";
 
-const getPackage = async (req, res, next) => {
+export const getPackage = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	try {
-		if (req.get("API_KEY") === process.env.API_KEY) {
-			//console.log("Accessed By: ", req.ip);
-		} else {
-			return res.status(401).json({ error: "Missing API_KEY in header" });
-		}
-
-		const packageId = req.query.trackingNumber;
-
+		const packageId = req.query.trackingNumber as string;
 		const packageData = await model.getPackages({
 			where: {
 				trackingId: packageId,
@@ -43,30 +41,26 @@ const getPackage = async (req, res, next) => {
 	}
 };
 
-const getRecentPackagesHomePage = async (req, res, next) => {
+export const getRecentPackagesHomePage = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	try {
-		if (req.get("API_KEY") === process.env.API_KEY) {
-			//console.log("Accessed By: ", req.ip);
-		} else {
-			return res.status(401).json({ error: "Missing API_KEY in header" });
-		}
+		const count = parseInt(req.query.count as string) || 0;
+		let limit = parseInt(req.query.limit as string) || 25;
+		if (limit > 100) limit = 100;
 
-		const count = parseInt(req.query.count) || 0;
-		let limit = parseInt(req.query.limit) || 25;
-		if (limit > 100) {
-			limit = 100;
-		}
-		const after = req.query.after;
-
+		const after = req.query.after as string;
 		let packageData: any;
 
 		if (after) {
 			const afterParsed = JSON.parse(after);
 			if (!afterParsed.trackingId || !afterParsed.carrier) {
-				res.statusCode = 400;
-				throw new Error(
-					"Invalid 'after' parameter: 'trackingId' and 'carrier' are required"
-				);
+				return res.status(400).json({
+					error:
+						"Invalid 'after' parameter: 'trackingId' and 'carrier' are required",
+				});
 			}
 
 			packageData = await model.getPackages({
@@ -136,31 +130,20 @@ const getRecentPackagesHomePage = async (req, res, next) => {
 
 		res.json(packageData);
 	} catch (error) {
-		//console.log(error.message);
-
 		next(error);
 	}
 };
 
-const getPackagePhoto = async (req, res, next) => {
+export const getPackagePhoto = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	try {
-		if (
-			req.get("API_KEY") === process.env.API_KEY ||
-			req.query.API_KEY === process.env.API_KEY
-		) {
-			//console.log("Accessed By: ", req.ip);
-		} else {
-			console.log(JSON.stringify(req.header));
-			return res.status(401).json({ error: "Missing API_KEY in header" });
-		}
-
-		const fileLocation = req.query.fileLocation;
+		const fileLocation = req.query.fileLocation as string;
 		const absolutePath = path.resolve(fileLocation);
 		res.sendFile(absolutePath);
 	} catch (error) {
-		//console.error("Error fetching photo:", error);
 		res.status(500).json({ error: "Internal server error" });
 	}
 };
-
-module.exports = { getPackage, getRecentPackagesHomePage, getPackagePhoto };
