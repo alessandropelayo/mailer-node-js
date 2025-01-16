@@ -3,6 +3,7 @@ import { authenticateToken, authorizeRoles } from "../middleware/auth";
 import { Role, AccessLevel } from "@prisma/client";
 import { userService } from "../models/userModel";
 import { AuthRequest } from "../types/auth.types";
+import { accessRequestService } from "../models/accessRequestService";
 
 const router = Router();
 
@@ -46,7 +47,7 @@ router.patch(
 	}
 );
 
-// Get all users with their access levels
+// Admin route to get all users with their access levels
 router.get(
 	"/users",
 	authenticateToken,
@@ -57,6 +58,53 @@ router.get(
 			res.json(users);
 		} catch (error) {
 			console.error("Error fetching users:", error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	}
+);
+
+// Admin route for managing access requests
+router.get(
+	"/pending",
+	authenticateToken,
+	authorizeRoles(Role.ADMIN),
+	async (req: AuthRequest, res) => {
+		try {
+			const requests = await accessRequestService.getPendingRequests();
+			res.json(requests);
+		} catch (error) {
+			console.error("Error fetching pending requests:", error);
+			res.status(500).json({ error: "Internal server error" });
+		}
+	}
+);
+
+// Admin route to approve/reject requests
+router.patch(
+	"/requests/:requestId",
+	authenticateToken,
+	authorizeRoles(Role.ADMIN),
+	async (req: AuthRequest, res) => {
+		try {
+			const { requestId } = req.params;
+			const { status, accessLevel } = req.body;
+
+			if (!["APPROVED", "REJECTED"].includes(status)) {
+				return res.status(400).json({ error: "Invalid status" });
+			}
+
+			const request = await accessRequestService.updateRequestStatus(
+				requestId,
+				status,
+				status === "APPROVED" ? accessLevel : undefined
+			);
+
+			res.json({
+				message: `Request ${status.toLowerCase()}`,
+				request,
+			});
+		} catch (error) {
+			console.error("Error updating request:", error);
 			res.status(500).json({ error: "Internal server error" });
 		}
 	}

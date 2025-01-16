@@ -1,17 +1,19 @@
-import { PrismaClient, User } from "@prisma/client";
+import { PrismaClient, User, Role, AccessLevel } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export interface CreateUserInput {
 	email: string;
 	password: string;
-	role?: string;
+	role?: Role;
+	accessLevel?: AccessLevel;
 }
 
 export interface UserModel {
 	id: string;
 	email: string;
-	role: string;
+	role: Role;
+	accessLevel: AccessLevel;
 }
 
 class UserService {
@@ -19,7 +21,8 @@ class UserService {
 		return prisma.user.create({
 			data: {
 				...data,
-				role: "USER",
+				role: Role.USER,
+				accessLevel: AccessLevel.NO_ACCESS, // Default access level
 			},
 		});
 	}
@@ -52,12 +55,40 @@ class UserService {
 		});
 	}
 
+	async updateUserAccess(
+		userId: string,
+		accessLevel: AccessLevel
+	): Promise<User> {
+		return prisma.user.update({
+			where: { id: userId },
+			data: { accessLevel },
+		});
+	}
+
+	async updateUserRole(userId: string, role: Role): Promise<User> {
+		return prisma.user.update({
+			where: { id: userId },
+			data: { role },
+		});
+	}
+
 	async sanitizeUser(user: User): Promise<UserModel> {
 		return {
 			id: user.id,
 			email: user.email,
 			role: user.role,
+			accessLevel: user.accessLevel,
 		};
+	}
+
+	async getAllUsers(): Promise<UserModel[]> {
+		const users = await prisma.user.findMany();
+		return users.map((user) => ({
+			id: user.id,
+			email: user.email,
+			role: user.role,
+			accessLevel: user.accessLevel,
+		}));
 	}
 }
 
