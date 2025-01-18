@@ -1,4 +1,5 @@
 import { accessRequestService } from "../models/accessRequestService";
+import { userService } from "../models/userModel";
 import { AccessLevel, AuthRequest } from "../types/auth.types";
 
 export const requestAccessLevel = async (req: AuthRequest, res) => {
@@ -26,6 +27,48 @@ export const requestAccessLevel = async (req: AuthRequest, res) => {
 		);
 
 		res.status(201).json(result);
+	} catch (error) {
+		console.error("Error processing access request:", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
+
+export const checkAccessAndRole = async (req: AuthRequest, res) => {
+	try {
+		const userId = req.user?.userId;
+		const userEmail = req.user?.email;
+
+		if (!userId || !userEmail) {
+			return res.status(401).json({ error: "Authentication required" });
+		}
+
+		const result = await userService.findUserById(req.user.userId);
+
+		if (!result) {
+			res.status(500).json({ error: "User could not be found" });
+		}
+
+		const sanitizedUser = await userService.sanitizeUser(result);
+
+		res.status(201).json(sanitizedUser);
+	} catch (error) {
+		console.error("Error processing access request:", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
+
+export const getAccessRequestUser = async (req: AuthRequest, res) => {
+	try {
+		const userId = req.user?.userId;
+
+		if (!userId) {
+			return res.status(401).json({ error: "Authentication required" });
+		}
+
+		// Get user's access requests
+		const accessRequests = await accessRequestService.getUserRequests(userId);
+
+		res.status(201).json(accessRequests);
 	} catch (error) {
 		console.error("Error processing access request:", error);
 		res.status(500).json({ error: "Internal server error" });

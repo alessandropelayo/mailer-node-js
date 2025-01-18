@@ -1,4 +1,10 @@
-import { PrismaClient, AccessLevel, RequestStatus, Role } from "@prisma/client";
+import {
+	PrismaClient,
+	AccessLevel,
+	RequestStatus,
+	Role,
+	User,
+} from "@prisma/client";
 import { userService } from "../models/userModel";
 
 const prisma = new PrismaClient();
@@ -52,6 +58,24 @@ export class AccessRequestService {
 			where: {
 				status: RequestStatus.PENDING,
 			},
+			include: {
+				user: {
+					select: {
+						email: true,
+						accessLevel: true,
+						role: true,
+					},
+				},
+			},
+			orderBy: {
+				createdAt: "desc",
+			},
+		});
+	}
+
+	async getUserRequests(userId: string) {
+		return prisma.accessRequest.findMany({
+			where: { userId: userId },
 			include: {
 				user: {
 					select: {

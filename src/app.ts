@@ -744,7 +744,7 @@ app.use(
 	"/",
 	cors({
 		origin: process.env.URL,
-		methods: ["GET", "POST", "PUT", "DELETE"],
+		methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 		allowedHeaders: ["Content-Type", "Authorization", "API_KEY"],
 	})
 );
