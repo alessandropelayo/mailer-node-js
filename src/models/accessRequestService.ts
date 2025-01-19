@@ -91,6 +91,28 @@ export class AccessRequestService {
 		});
 	}
 
+	async getRequest(id: string) {
+		return prisma.accessRequest.findUnique({
+			where: { id: id },
+			include: {
+				user: {
+					select: {
+						id: true,
+						email: true,
+						accessLevel: true,
+						role: true,
+					},
+				},
+			},
+		});
+	}
+
+	async deleteRequest(id: string) {
+		return prisma.accessRequest.delete({
+			where: { id: id },
+		});
+	}
+
 	async updateRequestStatus(
 		requestId: string,
 		status: RequestStatus,

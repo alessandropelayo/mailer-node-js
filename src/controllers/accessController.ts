@@ -74,3 +74,36 @@ export const getAccessRequestUser = async (req: AuthRequest, res) => {
 		res.status(500).json({ error: "Internal server error" });
 	}
 };
+
+export const cancelRequestUser = async (req: AuthRequest, res) => {
+	try {
+		const userId = req.user?.userId;
+		const { id } = req.body;
+
+		if (!userId) {
+			return res.status(401).json({ error: "Authentication required" });
+		}
+
+		// Get access request
+		const accessRequest = await accessRequestService.getRequest(id);
+
+		if (!accessRequest) {
+			return res.status(500).json({ error: "Request not found" });
+		}
+
+		if (userId !== accessRequest.userId) {
+			return res.status(401).json({ error: "Unauthorized access to request" });
+		}
+
+		if("PENDING" !== accessRequest.status) {
+			return res.status(401).json({ error: "Unauthorized permission to modify" });
+		}
+
+		await accessRequestService.deleteRequest(id);
+
+		res.status(201).json({ status: "Success" });
+	} catch (error) {
+		console.error("Error processing access request:", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
